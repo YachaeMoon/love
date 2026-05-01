@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 이상형 핵심가치 찾기</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        :root { --primary: #ff4757; --dark: #2f3542; --bg: #f1f2f6; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; width: 100%; max-width: 500px; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; }
+        h2 { text-align: center; color: var(--dark); font-size: 1.5rem; }
+        p { text-align: center; color: #747d8c; font-size: 0.9rem; margin-bottom: 25px; }
+        
+        /* 공통 버튼 스타일 */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; margin-bottom: 25px; }
+        .chip { padding: 12px 8px; border: 1.5px solid #eee; border-radius: 15px; text-align: center; cursor: pointer; transition: 0.2s; font-size: 13px; background: white; color: var(--dark); }
+        .chip.selected { background: var(--primary); color: white; border-color: var(--primary); font-weight: bold; }
+        
+        .pair-container { display: flex; flex-direction: column; gap: 15px; }
+        .pair { display: flex; gap: 10px; justify-content: center; align-items: center; padding: 15px; background: #fafafa; border-radius: 15px; }
+        .vs { font-weight: bold; color: var(--primary); font-size: 12px; }
+
+        .btn-main { width: 100%; padding: 18px; background: var(--dark); color: white; border: none; border-radius: 15px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        /* 결과 카드 디자인 (캡처될 영역) */
+        #result-card { 
+            display: none; padding: 40px 20px; border-radius: 20px; background: linear-gradient(135deg, #ff4757, #ff6b81); 
+            color: white; text-align: center; margin-bottom: 20px;
+        }
+        .result-title { font-size: 1.2rem; opacity: 0.9; margin-bottom: 10px; }
+        .result-keywords { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
+        .final-badge { background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; border: 1px solid rgba(255,255,255,0.3); }
+        
+        .hidden { display: none !important; }
+        .progress { text-align: center; font-weight: bold; color: var(--primary); margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="step1">
+        <h2>내가 중요하게 생각하는 가치</h2>
+        <p>포기할 수 없는 가치를 <b>최대 20개</b> 선택하세요.</p>
+        <div class="progress" id="count-display">0 / 20</div>
+        <div class="grid" id="keyword-grid"></div>
+        <button class="btn-main hidden" id="to-step2" onclick="startStep2()">선택 완료 (다음 단계)</button>
+    </div>
+
+    <div id="step2" class="hidden">
+        <h2>1:1 밸런스 게임</h2>
+        <p>둘 중 더 중요한 가치 <b>10개</b>를 골라주세요.</p>
+        <div class="pair-container" id="pair-grid"></div>
+        <button class="btn-main hidden" id="to-step3" onclick="startStep3()">최종 후보 확정</button>
+    </div>
+
+    <div id="step3" class="hidden">
+        <h2>마지막 선택</h2>
+        <p>이 중 가장 중요한 <b>최종 5개</b>를 선택하세요.</p>
+        <div class="grid" id="final-grid"></div>
+        <button class="btn-main hidden" id="finish-btn" onclick="showResult()">결과 카드 만들기</button>
+    </div>
+
+    <div id="result-page" class="hidden">
+        <div id="result-card">
+            <div class="result-title">나의 이상형 핵심 가치 TOP 5</div>
+            <div class="result-keywords" id="final-keywords-display"></div>
+            <p style="margin-top:30px; font-size: 0.7rem; opacity: 0.7; color: white;">#이상형찾기 #가치관테스트</p>
+        </div>
+        <button class="btn-main" style="background: #27ae60;" onclick="captureResult()">이미지로 저장하기</button>
+        <button class="btn-main" style="background: #747d8c; margin-top:10px;" onclick="location.reload()">다시 하기</button>
+    </div>
+</div>
+
+<script>
+    // 원본 데이터 [cite: 1-58]
+    const keywords = [
+        "신뢰", "정직", "소통", "배려", "존중", "책임감", "안정감", "유머", "따뜻함", "활발함", 
+        "차분함", "긍정적", "인내심", "절제", "겸손", "성실함", "목표지향", "모험심", "친절", "예의", 
+        "협력", "꾸준함", "자발적", "리더십", "자기성찰", "규율", "낙관적", "현실적", "감사", "회복탄력성", 
+        "열정", "희망", "창의성", "개방적", "호기심", "분석적", "비판적 사고", "유연성", "혁신성", "배우려는 태도", 
+        "객관성", "지혜", "결단력", "추진력", "카리스마", "공정성", "설득력", "영향력", "MBTI성향", "취향/취미", 
+        "소통방식", "외모", "비전", "가치관", "사회적조건", "경제력", "나이", "연애스타일"
+    ];
+
+    let step1Selected = [];
+    let step2Selected = [];
+    let final5 = [];
+
+    // Step 1 초기화
+    const grid = document.getElementById('keyword-grid');
+    keywords.forEach(kw => {
+        const div = document.createElement('div');
+        div.className = 'chip';
+        div.innerText = kw;
+        div.onclick = () => {
+            if (div.classList.contains('selected')) {
+                div.classList.remove('selected');
+                step1Selected = step1Selected.filter(i => i !== kw);
+            } else if (step1Selected.length < 20) {
+                div.classList.add('selected');
+                step1Selected.push(kw);
+            }
+            document.getElementById('count-display').innerText = `${step1Selected.length} / 20`;
+            document.getElementById('to-step2').classList.toggle('hidden', step1Selected.length < 10);
+        };
+        grid.appendChild(div);
+    });
+
+    function startStep2() {
+        document.getElementById('step1').classList.add('hidden');
+        document.getElementById('step2').classList.remove('hidden');
+        const pairGrid = document.getElementById('pair-grid');
+        const shuffled = [...step1Selected].sort(() => 0.5 - Math.random());
+        
+        for (let i = 0; i < shuffled.length; i += 2) {
+            if(!shuffled[i+1]) break;
+            const pairDiv = document.createElement('div');
+            pairDiv.className = 'pair';
+            pairDiv.innerHTML = `<div class="chip" onclick="selectPair(this)">${shuffled[i]}</div>
+                                 <span class="vs">VS</span>
+                                 <div class="chip" onclick="selectPair(this)">${shuffled[i+1]}</div>`;
+            pairGrid.appendChild(pairDiv);
+        }
+    }
+
+    function selectPair(el) {
+        el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        const selectedCount = document.querySelectorAll('#pair-grid .chip.selected').length;
+        document.getElementById('to-step3').classList.toggle('hidden', selectedCount < 10);
+    }
+
+    function startStep3() {
+        step2Selected = Array.from(document.querySelectorAll('#pair-grid .chip.selected')).map(c => c.innerText);
+        document.getElementById('step2').classList.add('hidden');
+        document.getElementById('step3').classList.remove('hidden');
+        const finalGrid = document.getElementById('final-grid');
+        
+        step2Selected.forEach(kw => {
+            const div = document.createElement('div');
+            div.className = 'chip';
+            div.innerText = kw;
+            div.onclick = () => {
+                if (div.classList.contains('selected')) {
+                    div.classList.remove('selected');
+                    final5 = final5.filter(i => i !== kw);
+                } else if (final5.length < 5) {
+                    div.classList.add('selected');
+                    final5.push(kw);
+                }
+                document.getElementById('finish-btn').classList.toggle('hidden', final5.length < 5);
+            };
+            finalGrid.appendChild(div);
+        });
+    }
+
+    function showResult() {
+        document.getElementById('step3').classList.add('hidden');
+        document.getElementById('result-page').classList.remove('hidden');
+        document.getElementById('result-card').style.display = 'block';
+        const display = document.getElementById('final-keywords-display');
+        final5.forEach(kw => {
+            display.innerHTML += `<div class="final-badge">${kw}</div>`;
+        });
+    }
+
+    // 캡처 및 이미지 다운로드 함수
+    function captureResult() {
+        const card = document.getElementById('result-card');
+        html2canvas(card, {
+            backgroundColor: null,
+            scale: 2 // 화질 향상
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'my-ideal-values.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+</script>
+</body>
+</html>
