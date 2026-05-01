@@ -11,27 +11,17 @@
         .container { background: white; width: 100%; max-width: 500px; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; }
         h2 { text-align: center; color: var(--dark); font-size: 1.5rem; }
         p { text-align: center; color: #747d8c; font-size: 0.9rem; margin-bottom: 25px; }
-        
-        /* 공통 버튼 스타일 */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; margin-bottom: 25px; }
         .chip { padding: 12px 8px; border: 1.5px solid #eee; border-radius: 15px; text-align: center; cursor: pointer; transition: 0.2s; font-size: 13px; background: white; color: var(--dark); }
         .chip.selected { background: var(--primary); color: white; border-color: var(--primary); font-weight: bold; }
-        
         .pair-container { display: flex; flex-direction: column; gap: 15px; }
         .pair { display: flex; gap: 10px; justify-content: center; align-items: center; padding: 15px; background: #fafafa; border-radius: 15px; }
         .vs { font-weight: bold; color: var(--primary); font-size: 12px; }
-
         .btn-main { width: 100%; padding: 18px; background: var(--dark); color: white; border: none; border-radius: 15px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        
-        /* 결과 카드 디자인 (캡처될 영역) */
-        #result-card { 
-            display: none; padding: 40px 20px; border-radius: 20px; background: linear-gradient(135deg, #ff4757, #ff6b81); 
-            color: white; text-align: center; margin-bottom: 20px;
-        }
+        #result-card { display: none; padding: 40px 20px; border-radius: 20px; background: linear-gradient(135deg, #ff4757, #ff6b81); color: white; text-align: center; margin-bottom: 20px; }
         .result-title { font-size: 1.2rem; opacity: 0.9; margin-bottom: 10px; }
         .result-keywords { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
         .final-badge { background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; border: 1px solid rgba(255,255,255,0.3); }
-        
         .hidden { display: none !important; }
         .progress { text-align: center; font-weight: bold; color: var(--primary); margin-bottom: 10px; }
     </style>
@@ -40,25 +30,27 @@
 
 <div class="container">
     <div id="step1">
-        <h2>내가 중요하게 생각하는 가치</h2>
-        <p>포기할 수 없는 가치를 <b>최대 20개</b> 선택하세요.</p>
-        <div class="progress" id="count-display">0 / 20</div>
+        <h2>Step 1: 가치 선택</h2>
+        <p>포기할 수 없는 가치를 <b>정확히 20개</b> 선택하세요.</p>
+        <div class="progress" id="count-step1">0 / 20</div>
         <div class="grid" id="keyword-grid"></div>
-        <button class="btn-main hidden" id="to-step2" onclick="startStep2()">선택 완료 (다음 단계)</button>
+        <button class="btn-main hidden" id="to-step2" onclick="startStep2()">2단계 시작 (밸런스 게임)</button>
     </div>
 
     <div id="step2" class="hidden">
-        <h2>1:1 밸런스 게임</h2>
-        <p>둘 중 더 중요한 가치 <b>10개</b>를 골라주세요.</p>
+        <h2>Step 2: 1:1 밸런스 게임</h2>
+        <p>각 묶음에서 더 중요한 가치를 하나씩 골라주세요.</p>
+        <div class="progress" id="count-step2">선택 완료: 0 / 10</div>
         <div class="pair-container" id="pair-grid"></div>
-        <button class="btn-main hidden" id="to-step3" onclick="startStep3()">최종 후보 확정</button>
+        <button class="btn-main hidden" id="to-step3" onclick="startStep3()">최종 5개 고르기</button>
     </div>
 
     <div id="step3" class="hidden">
-        <h2>마지막 선택</h2>
-        <p>이 중 가장 중요한 <b>최종 5개</b>를 선택하세요.</p>
+        <h2>Step 3: 최종 선택</h2>
+        <p>10개 중 가장 소중한 <b>최종 5개</b>를 선택하세요.</p>
+        <div class="progress" id="count-step3">0 / 5</div>
         <div class="grid" id="final-grid"></div>
-        <button class="btn-main hidden" id="finish-btn" onclick="showResult()">결과 카드 만들기</button>
+        <button class="btn-main hidden" id="finish-btn" onclick="showResult()">결과 카드 생성</button>
     </div>
 
     <div id="result-page" class="hidden">
@@ -73,7 +65,7 @@
 </div>
 
 <script>
-    // 원본 데이터 [cite: 1-58]
+    // PDF 기반 키워드 [cite: 1-58]
     const keywords = [
         "신뢰", "정직", "소통", "배려", "존중", "책임감", "안정감", "유머", "따뜻함", "활발함", 
         "차분함", "긍정적", "인내심", "절제", "겸손", "성실함", "목표지향", "모험심", "친절", "예의", 
@@ -101,41 +93,51 @@
                 div.classList.add('selected');
                 step1Selected.push(kw);
             }
-            document.getElementById('count-display').innerText = `${step1Selected.length} / 20`;
-            document.getElementById('to-step2').classList.toggle('hidden', step1Selected.length < 10);
+            document.getElementById('count-step1').innerText = `${step1Selected.length} / 20`;
+            document.getElementById('to-step2').classList.toggle('hidden', step1Selected.length !== 20);
         };
         grid.appendChild(div);
     });
 
+    // Step 2 시작 (밸런스 게임 생성)
     function startStep2() {
         document.getElementById('step1').classList.add('hidden');
         document.getElementById('step2').classList.remove('hidden');
         const pairGrid = document.getElementById('pair-grid');
+        pairGrid.innerHTML = "";
+        
         const shuffled = [...step1Selected].sort(() => 0.5 - Math.random());
         
+        // 20개를 2개씩 짝지어 10쌍을 모두 생성
         for (let i = 0; i < shuffled.length; i += 2) {
-            if(!shuffled[i+1]) break;
             const pairDiv = document.createElement('div');
             pairDiv.className = 'pair';
-            pairDiv.innerHTML = `<div class="chip" onclick="selectPair(this)">${shuffled[i]}</div>
-                                 <span class="vs">VS</span>
-                                 <div class="chip" onclick="selectPair(this)">${shuffled[i+1]}</div>`;
+            pairDiv.innerHTML = `
+                <div class="chip" onclick="selectPair(this)">${shuffled[i]}</div>
+                <span class="vs">VS</span>
+                <div class="chip" onclick="selectPair(this)">${shuffled[i+1]}</div>
+            `;
             pairGrid.appendChild(pairDiv);
         }
+        window.scrollTo(0,0);
     }
 
     function selectPair(el) {
         el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
         el.classList.add('selected');
+        
         const selectedCount = document.querySelectorAll('#pair-grid .chip.selected').length;
-        document.getElementById('to-step3').classList.toggle('hidden', selectedCount < 10);
+        document.getElementById('count-step2').innerText = `선택 완료: ${selectedCount} / 10`;
+        document.getElementById('to-step3').classList.toggle('hidden', selectedCount !== 10);
     }
 
+    // Step 3 시작
     function startStep3() {
         step2Selected = Array.from(document.querySelectorAll('#pair-grid .chip.selected')).map(c => c.innerText);
         document.getElementById('step2').classList.add('hidden');
         document.getElementById('step3').classList.remove('hidden');
         const finalGrid = document.getElementById('final-grid');
+        finalGrid.innerHTML = "";
         
         step2Selected.forEach(kw => {
             const div = document.createElement('div');
@@ -149,10 +151,12 @@
                     div.classList.add('selected');
                     final5.push(kw);
                 }
-                document.getElementById('finish-btn').classList.toggle('hidden', final5.length < 5);
+                document.getElementById('count-step3').innerText = `${final5.length} / 5`;
+                document.getElementById('finish-btn').classList.toggle('hidden', final5.length !== 5);
             };
             finalGrid.appendChild(div);
         });
+        window.scrollTo(0,0);
     }
 
     function showResult() {
@@ -160,20 +164,18 @@
         document.getElementById('result-page').classList.remove('hidden');
         document.getElementById('result-card').style.display = 'block';
         const display = document.getElementById('final-keywords-display');
+        display.innerHTML = "";
         final5.forEach(kw => {
             display.innerHTML += `<div class="final-badge">${kw}</div>`;
         });
+        window.scrollTo(0,0);
     }
 
-    // 캡처 및 이미지 다운로드 함수
     function captureResult() {
         const card = document.getElementById('result-card');
-        html2canvas(card, {
-            backgroundColor: null,
-            scale: 2 // 화질 향상
-        }).then(canvas => {
+        html2canvas(card, { backgroundColor: "#f1f2f6", scale: 2 }).then(canvas => {
             const link = document.createElement('a');
-            link.download = 'my-ideal-values.png';
+            link.download = 'ideal-type-result.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         });
